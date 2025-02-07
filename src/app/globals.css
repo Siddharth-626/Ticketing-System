@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Set global blue theme */
+:root {
+  --background: #e3f2fd; /* Light blue */
+  --text-color: #0d47a1; /* Dark blue */
+}
+
+.dark {
+  --background: #0d47a1; /* Dark blue */
+  --text-color: #bbdefb; /* Light blue */
+}
+
+/* Apply theme globally */
+body {
+  background-color: var(--background);
+  color: var(--text-color);
+}

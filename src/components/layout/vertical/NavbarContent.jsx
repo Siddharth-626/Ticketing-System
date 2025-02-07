@@ -1,0 +1,55 @@
+// Next Imports
+import Link from 'next/link'
+
+// MUI Imports
+import IconButton from '@mui/material/IconButton'
+import Button from '@mui/material/Button'
+
+// Third-party Imports
+import classnames from 'classnames'
+
+// Component Imports
+import NavToggle from './NavToggle'
+import NavSearch from '@components/layout/shared/search'
+import ModeDropdown from '@components/layout/shared/ModeDropdown'
+import { auth } from '@/config/firebase'
+// Util Imports
+import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
+import { useEffect, useState } from 'react'
+
+const NavbarContent = () => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Listen for Firebase authentication state changes
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, []);
+  return (
+    <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
+      <div className='flex items-center gap-2 sm:gap-4'>
+        <NavToggle />
+      </div>
+      <div className='flex items-center'>
+        <ModeDropdown />
+        <IconButton className='text-textPrimary'>
+          <i className='ri-notification-2-line' />
+        </IconButton>
+
+        {/* Login Button */}
+        {!user && (
+          <Link href="/login" passHref>
+            <Button variant="contained" color="primary" className="ml-4">
+              Login
+            </Button>
+          </Link>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default NavbarContent
