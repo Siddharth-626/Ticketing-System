@@ -25,7 +25,7 @@ const FooterContent = () => {
         <span>{`❤️`}</span>
         <span>{` by `}</span>
         <Link href='https://freshkite.com' target='_blank' className='text-primary'>
-          Siddharth
+            Racheniya
         </Link>
       </p>
       {!isBreakpointReached && (

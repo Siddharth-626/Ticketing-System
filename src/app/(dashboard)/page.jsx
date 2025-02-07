@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/config/firebase";
-import { collection, query, where, getDocs, doc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { useUserRoleContext } from "@/@menu/contexts/UserRoleContext";
 
 // MUI Imports
@@ -16,6 +16,8 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 
 const DashboardAnalytics = () => {
   const router = useRouter();
@@ -24,7 +26,7 @@ const DashboardAnalytics = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (loading) return; // Wait for role to load
+    if (loading) return;
 
     const fetchTickets = async () => {
       setIsLoading(true);
@@ -33,10 +35,10 @@ const DashboardAnalytics = () => {
         if (!user) return;
 
         let q;
-        if (userRole === "agent") {
-          q = query(collection(db, "tickets")); // Support agents see all tickets
+        if (userRole === "agent" || userRole === "admin") {
+          q = query(collection(db, "tickets")); 
         } else {
-          q = query(collection(db, "tickets"), where("createdBy", "==", user.uid)); // Customers see only their tickets
+          q = query(collection(db, "tickets"), where("createdBy", "==", user.uid));
         }
 
         const querySnapshot = await getDocs(q);
@@ -52,12 +54,12 @@ const DashboardAnalytics = () => {
     fetchTickets();
   }, [userRole, loading]);
 
-  const handleDelete = async (ticketId) => {
+  const handleStatusChange = async (ticketId, newStatus) => {
     try {
-      await deleteDoc(doc(db, "tickets", ticketId));
-      setTickets(tickets.filter(ticket => ticket.id !== ticketId)); // Remove from state
+      await updateDoc(doc(db, "tickets", ticketId), { status: newStatus });
+      setTickets(prevTickets => prevTickets.map(ticket => ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket));
     } catch (error) {
-      console.error("Error deleting ticket:", error);
+      console.error("Error updating ticket status:", error);
     }
   };
 
@@ -79,7 +81,6 @@ const DashboardAnalytics = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Ticket ID</TableCell>
                 <TableCell>Title</TableCell>
                 <TableCell>Description</TableCell>
                 <TableCell>Priority</TableCell>
@@ -90,13 +91,12 @@ const DashboardAnalytics = () => {
             <TableBody>
               {tickets.map(ticket => (
                 <TableRow key={ticket.id}>
-                  <TableCell>{ticket.id}</TableCell>
                   <TableCell>{ticket.title}</TableCell>
                   <TableCell>{ticket.description}</TableCell>
                   <TableCell>{ticket.priority}</TableCell>
-                  <TableCell>{ticket.status}</TableCell>
+                  <TableCell>{ticket.status || "Open"}</TableCell>
                   <TableCell>
-                    {userRole === "customer" && (
+                    {userRole === "customer" ? (
                       <>
                         <Button 
                           onClick={() => router.push(`/add-ticket?id=${ticket.id}`)}
@@ -104,11 +104,25 @@ const DashboardAnalytics = () => {
                         >
                           Edit
                         </Button>
-                        <Button color="error" onClick={() => handleDelete(ticket.id)}>
+                        <Button color="error">
                           Delete
                         </Button>
                       </>
-                    )}
+                    ) : userRole === "agent" ? (
+                      <>
+                        <Select
+                          value={ticket.status || "Open"}
+                          onChange={(e) => handleStatusChange(ticket.id, e.target.value)}
+                        >
+                          <MenuItem value="Open">Open</MenuItem>
+                          <MenuItem value="In Progress">In Progress</MenuItem>
+                          <MenuItem value="Closed">Closed</MenuItem>
+                        </Select>
+                        <Button onClick={() => router.push(`/ticket/${ticket.id}`)} color="secondary">
+                          View
+                        </Button>
+                      </>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}

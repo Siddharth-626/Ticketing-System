@@ -12,15 +12,23 @@ import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 
 // Define validation schema with Yup
 const schema = yup.object().shape({
   title: yup.string().required("Title is required").min(5, "Title must be at least 5 characters"),
   description: yup.string().required("Description is required").min(10, "Description must be at least 10 characters"),
   priority: yup.string().oneOf(["Low", "Medium", "High"], "Invalid priority"),
+  category: yup.string().required("Category is required"),
+  contactEmail: yup.string().email("Invalid email address").required("Email is required"),
+  phone: yup.string().matches(/^[0-9]{10}$/, "Phone number must be 10 digits").required("Phone number is required"),
+  dueDate: yup.date().required("Due date is required"), // New due date validation
+  isUrgent: yup.boolean(),
 });
 
 const priorities = ["Low", "Medium", "High"];
+const categories = ["Bug", "Feature Request", "Task", "Other"];
 
 const AddTicket = () => {
   const router = useRouter();
@@ -39,7 +47,11 @@ const AddTicket = () => {
       title: "",
       description: "",
       priority: "Medium",
-      status: "Open",
+      category: "Bug",
+      contactEmail: "",
+      phone: "",
+      dueDate: "", // Initialize dueDate
+      isUrgent: false,
     },
   });
 
@@ -132,6 +144,59 @@ const AddTicket = () => {
                 </MenuItem>
               ))}
             </TextField>
+
+            <TextField
+              fullWidth
+              select
+              label="Category"
+              {...register("category")}
+              error={!!errors.category}
+              helperText={errors.category?.message}
+              margin="normal"
+            >
+              {categories.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              fullWidth
+              label="Contact Email"
+              {...register("contactEmail")}
+              error={!!errors.contactEmail}
+              helperText={errors.contactEmail?.message}
+              required
+              margin="normal"
+            />
+
+            <TextField
+              fullWidth
+              label="Phone"
+              {...register("phone")}
+              error={!!errors.phone}
+              helperText={errors.phone?.message}
+              required
+              margin="normal"
+            />
+
+            {/* New Due Date field */}
+            <TextField
+              fullWidth
+              type="date"
+              label="Due Date"
+              {...register("dueDate")}
+              error={!!errors.dueDate}
+              helperText={errors.dueDate?.message}
+              required
+              margin="normal"
+            />
+
+            <FormControlLabel
+              control={ <Checkbox {...register("isUrgent")} />}
+              label="Is Urgent"
+            />
 
             <Button type="submit" variant="contained" color="primary" fullWidth>
               {ticketId ? "Update Ticket" : "Submit"}
